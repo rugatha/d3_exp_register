@@ -1,11 +1,4 @@
 
-// === v7e: hash-based password check (no plaintext in code) ===
-const ADMIN_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // SHA-256(admin code). Change to your own hash via hash.html.
-async function sha256Hex(text) {
-  const enc = new TextEncoder().encode(text);
-  const buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
 
 // 後台檢視（無後端 / localStorage）— 手動移除報名（僅釋放席位，保留報名紀錄）
 const DATES = ["12/13（六）", "12/14（日）"];
@@ -47,14 +40,6 @@ function ensureInitialized() {
   lsSet(data);
 }
 
-function requireLogin() {
-  adminPanel.classList.add("hidden");
-  loginPanel.classList.remove("hidden");
-}
-function loginOk() {
-  loginPanel.classList.add("hidden");
-  adminPanel.classList.remove("hidden");
-}
 
 }
 });
@@ -201,9 +186,7 @@ function loadAll() {
 }
 
 // Start
-function start() {
-  requireLogin();
-}
+function start(){ loadAll(); }
 start();
 
 
@@ -224,42 +207,4 @@ if (togglePwBtn) {
 
 
 // ===== v7e additions: robust login (SHA-256) & toggle password =====
-(function(){
-  try {
-    const passInput = document.getElementById("adminPass");
-    const loginBtn = document.getElementById("loginBtn");
-    const togglePwBtn = document.getElementById("togglePw");
-    const err = document.getElementById("loginError");
-    if (togglePwBtn && passInput) {
-      togglePwBtn.addEventListener("click", function(e){
-        e.preventDefault();
-        if (passInput.type === "password") {
-          passInput.type = "text";
-          togglePwBtn.textContent = "隱藏密碼";
-        } else {
-          passInput.type = "password";
-          togglePwBtn.textContent = "顯示密碼";
-        }
-      });
-    }
-    async function doLogin() {
-      const val = (passInput.value || "").trim();
-      const hex = await sha256Hex(val);
-      if (hex === ADMIN_HASH) {
-        if (err) err.classList.add("hidden");
-        loginOk(); loadAll();
-      } else {
-        if (err) err.classList.remove("hidden");
-        else alert("密碼錯誤");
-      }
-    }
-    if (loginBtn && passInput) {
-      loginBtn.addEventListener("click", ()=>{ doLogin(); });
-      passInput.addEventListener("keydown", (e)=>{ if (e.key === "Enter") doLogin(); });
-    }
-  } catch (e) {
-    console.error("v7e login/toggle init error:", e);
-  }
-})();
-// ===== end v7e additions =====
 

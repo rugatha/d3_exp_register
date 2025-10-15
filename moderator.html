@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>報名清單</title>
+  <title>報名清單（主持頁）</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,23 +12,7 @@
   </header>
 
   <main>
-    <section id="loginPanel" class="card">
-      <h2>登入後台</h2>
-      <div class="input login">
-        <label>
-          後台密碼
-          <div class="pwline">
-          <input id="adminPass" type="password" placeholder="輸入管理密碼" />
-          <button id="togglePw" class="btn">顯示密碼</button>
-        </div>
-        <div id="loginError" class="error hidden">密碼錯誤，請再試一次。</div>
-        </label>
-        <button id="loginBtn" class="btn primary">登入</button>
-      </div>
-    <div id="debugInfo" class="tip">admin.v7e.js 已載入</div>
-    </section>
-
-    <section id="adminPanel" class="hidden">
+    <section id="adminPanel">
       <div class="flex">
         <div class="card">
           <h2>各時段報名人數</h2>
@@ -47,6 +31,6 @@
     </section>
   </main>
 
-  <script src="admin.v7e.js"></script>
+  <script src="moderator.js"></script>
 </body>
 </html>

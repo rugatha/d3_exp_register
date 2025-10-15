@@ -7,7 +7,7 @@
 - 欄位改為「冒險者名稱」「手機號碼」（皆必填）。
 - 以下拉選單選擇各時段報名數量。
 
-後台（admin.html）
+後台（moderator.html）
 - 標題置中「報名清單」。無頂部工具列。
 - 「各時段報名人數」以進度條 + 數字呈現。
 - 「各時段報名者」區列出姓名與手機，並提供「移除」按鈕（僅釋放席位；**保留**在「所有報名」紀錄中）。
@@ -18,4 +18,7 @@
 1. 建公開 repo，上傳這些檔案到根目錄。
 2. Settings → Pages → Source: Deploy from a branch → main / (root)
 3. 前台：`https://<帳號>.github.io/<repo>/`
-4. 後台：`https://<帳號>.github.io/<repo>/admin.html`（登入密碼請在 `admin.js` 的 `ADMIN_PASSWORD` 調整）
+4. 後台：`https://<帳號>.github.io/<repo>/moderator.html`
+
+
+> 這版移除了密碼保護，直接以 `moderator.html` 作為主持檢視頁。
