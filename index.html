@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>預約系統（無後端版）</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>預約系統（A/B 日 · 13:00–17:00 · 每時段 3 名）— 無後端版</h1>
+  </header>
+
+  <main>
+    <section class="input">
+      <label>
+        你的稱呼（必填）
+        <input id="nameInput" type="text" placeholder="例如：阿龍" />
+      </label>
+      <label>
+        Email（選填，用於通知）
+        <input id="emailInput" type="email" placeholder="you@example.com" />
+      </label>
+    </section>
+
+    <section>
+      <div class="tabs">
+        <button class="tab active" data-date="A">A 日</button>
+        <button class="tab" data-date="B">B 日</button>
+        <a class="admin-link" href="admin.html" title="管理後台">管理後台 →</a>
+      </div>
+      <div id="slots" class="grid"></div>
+    </section>
+
+    <p class="tip">提示：這是 <strong>無後端（localStorage）</strong> 版本，適合個人或 Demo，用 GitHub Pages 即可部署。多人同時使用不會即時同步。</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
