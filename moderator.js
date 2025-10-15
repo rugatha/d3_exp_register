@@ -1,15 +1,9 @@
+// moderator v7g — clean build (no login).
+// Renders status, people, and reservations directly.
 
-
-// 後台檢視（無後端 / localStorage）— 手動移除報名（僅釋放席位，保留報名紀錄）
 const DATES = ["12/13（六）", "12/14（日）"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
-const ADMIN_PASSWORD = "admin123"; // 頁面不顯示
-
-const loginPanel = document.getElementById("loginPanel");
-const adminPanel = document.getElementById("adminPanel");
-const passInput = document.getElementById("adminPass");
-const loginBtn = document.getElementById("loginBtn");
 
 const slotStatus = document.getElementById("slotStatus");
 const slotPeople = document.getElementById("slotPeople");
@@ -18,6 +12,7 @@ const reservationList = document.getElementById("reservationList");
 function fmtHour(h) { return `${h.toString().padStart(2, "0")}:00`; }
 function lsGet() { try { return JSON.parse(localStorage.getItem("bookingData")); } catch { return null; } }
 function lsSet(data) { localStorage.setItem("bookingData", JSON.stringify(data)); }
+
 function ensureInitialized() {
   let data = lsGet();
   if (!data) data = { slots: {}, reservations: [] };
@@ -38,20 +33,15 @@ function ensureInitialized() {
   }
   if (!Array.isArray(data.reservations)) data.reservations = [];
   lsSet(data);
+  return data;
 }
-
-
-}
-});
-  }
-});
 
 function renderStatus() {
   slotStatus.innerHTML = "";
-  const data = lsGet();
+  const data = ensureInitialized();
   for (const d of DATES) {
     const title = document.createElement("h3");
-    title.textContent = d; // 不顯示「日期」字樣
+    title.textContent = d;
     slotStatus.appendChild(title);
     for (const h of HOURS) {
       const key = fmtHour(h);
@@ -61,33 +51,28 @@ function renderStatus() {
       const pct = Math.round((taken / s.capacity) * 100);
       const row = document.createElement("div");
       row.className = "row progress";
-      row.style.setProperty('--pct', pct + '%');
-      row.innerHTML = `
-        <div style="min-width:70px; z-index:1;">${key}</div>
+      row.style.setProperty("--pct", pct + "%");
+      row.innerHTML = `<div style="min-width:70px; z-index:1;">${key}</div>
         <div style="flex:1; display:flex; justify-content:flex-end; gap:10px; z-index:1;">
           <span class="badge">${taken}/${s.capacity}${left>=0?`（剩 ${left}）`:"（已滿）"}</span>
-        </div>
-      `;
+        </div>`;
       slotStatus.appendChild(row);
     }
   }
 }
-  }
-}
 
-// Remove a single seat (by date, slot, seatIndex). Only frees seat; does NOT modify reservations.
 function removeSeat(date, slot, seatIndex) {
-  const data = lsGet();
+  const data = ensureInitialized();
   const slotObj = data.slots[date][slot];
   if (!slotObj || !slotObj.seats[seatIndex]) return false;
-  slotObj.seats[seatIndex] = null;
+  slotObj.seats[seatIndex] = null; // free seat only; keep reservation history
   lsSet(data);
   return true;
 }
 
 function renderPeopleBySlot() {
   slotPeople.innerHTML = "";
-  const data = lsGet();
+  const data = ensureInitialized();
   for (const d of DATES) {
     const t = document.createElement("h3");
     t.textContent = d;
@@ -97,6 +82,11 @@ function renderPeopleBySlot() {
       const s = data.slots[d][key];
       const row = document.createElement("div");
       row.className = "row";
+
+      const left = document.createElement("div");
+      left.style.minWidth = "70px";
+      left.textContent = key;
+
       const right = document.createElement("div");
       right.style.flex = "1";
       right.style.textAlign = "right";
@@ -105,16 +95,12 @@ function renderPeopleBySlot() {
         const line = document.createElement("div");
         line.className = "seatline";
         if (!p) {
-          line.innerHTML = `#${idx+1}: （空）`;
+          line.textContent = `#${idx+1}: （空）`;
         } else {
           line.innerHTML = `#${idx+1}: <span class="name-phone">${p.name}${p.phone ? " &lt;"+p.phone+"&gt;" : ""}</span> <button class="btn danger" data-date="${d}" data-slot="${key}" data-idx="${idx}">移除</button>`;
         }
         right.appendChild(line);
       });
-
-      const left = document.createElement("div");
-      left.style.minWidth = "70px";
-      left.textContent = key;
 
       row.appendChild(left);
       row.appendChild(right);
@@ -131,27 +117,7 @@ function renderPeopleBySlot() {
       if (confirm(`確認移除 ${date} ${slot} 的 #${idx+1} 名額？`)) {
         const ok = removeSeat(date, slot, idx);
         if (ok) {
-          alert("已移除（保留在所有報名的紀錄中）。");
-          loadAll();
-        } else {
-          alert("移除失敗或該席位為空。");
-        }
-      }
-    });
-  });
-}
-  }
-
-  // bind remove buttons
-  slotPeople.querySelectorAll("button.btn.danger").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const date = btn.dataset.date;
-      const slot = btn.dataset.slot;
-      const idx = Number(btn.dataset.idx);
-      if (confirm(`確認移除 ${date} ${slot} 的 #${idx+1} 名額？`)) {
-        const ok = removeSeat(date, slot, idx);
-        if (ok) {
-          alert("已移除（保留在所有報名的紀錄中）。");
+          alert("已移除（保留在所有報名紀錄中）。");
           loadAll();
         } else {
           alert("移除失敗或該席位為空。");
@@ -163,7 +129,7 @@ function renderPeopleBySlot() {
 
 function renderReservations() {
   reservationList.innerHTML = "";
-  const data = lsGet();
+  const data = ensureInitialized();
   if (!data.reservations.length) {
     reservationList.innerHTML = "<div class='row'>尚無資料</div>";
     return;
@@ -179,32 +145,14 @@ function renderReservations() {
 }
 
 function loadAll() {
-  ensureInitialized();
-  renderStatus();
-  renderPeopleBySlot();
-  renderReservations();
+  try {
+    renderStatus();
+    renderPeopleBySlot();
+    renderReservations();
+  } catch (e) {
+    console.error("moderator load error:", e);
+    alert("主持頁面載入時發生錯誤，請開啟 Console 查看詳細。");
+  }
 }
 
-// Start
-function start(){ loadAll(); }
-start();
-
-
-// Click to toggle show/hide password
-const togglePwBtn = document.getElementById("togglePw");
-if (togglePwBtn) {
-  togglePwBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (passInput.type === "password") {
-      passInput.type = "text";
-      togglePwBtn.textContent = "隱藏密碼";
-    } else {
-      passInput.type = "password";
-      togglePwBtn.textContent = "顯示密碼";
-    }
-  });
-}
-
-
-// ===== v7e additions: robust login (SHA-256) & toggle password =====
-
+document.addEventListener("DOMContentLoaded", loadAll);
