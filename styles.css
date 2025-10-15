@@ -67,6 +67,9 @@ main { padding:24px; max-width: clamp(320px, 92vw, 1100px); margin:0 auto; }
 
 /* --- Responsive (<= 640px) --- */
 @media (max-width: 768px) {
+  .flex { flex-direction: column; }
+  .card { width: 100%; }
+
   .input { grid-template-columns: 1fr; }
   .sticky-bar { flex-direction: column; gap: 8px; align-items: stretch; }
   .sticky-bar .actions { display:flex; gap:8px; }
