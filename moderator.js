@@ -51,7 +51,6 @@ function renderStatus() {
       const pct = Math.round((taken / s.capacity) * 100);
       const row = document.createElement("div");
       row.className = "row progress";
-      row.dataset.date = d; row.dataset.slot = key;
       row.style.setProperty("--pct", pct + "%");
       row.innerHTML = `<div style="min-width:70px; z-index:1;">${key}</div>
         <div style="flex:1; display:flex; justify-content:flex-end; gap:10px; z-index:1;">
@@ -83,11 +82,15 @@ function renderPeopleBySlot() {
       const s = data.slots[d][key];
       const row = document.createElement("div");
       row.className = "row";
-      row.dataset.date = d; row.dataset.slot = key;
+
       const left = document.createElement("div");
-      left.style.minWidth = "70px"; left.textContent = key;
+      left.style.minWidth = "70px";
+      left.textContent = key;
+
       const right = document.createElement("div");
-      right.style.flex = "1"; right.style.textAlign = "right";
+      right.style.flex = "1";
+      right.style.textAlign = "right";
+
       s.seats.forEach((p, idx) => {
         const line = document.createElement("div");
         line.className = "seatline";
@@ -98,7 +101,9 @@ function renderPeopleBySlot() {
         }
         right.appendChild(line);
       });
-      row.appendChild(left); row.appendChild(right);
+
+      row.appendChild(left);
+      row.appendChild(right);
       slotPeople.appendChild(row);
     }
   }
@@ -150,40 +155,4 @@ function loadAll() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", ()=>{ loadAll(); syncRowHeights(); });
-
-function syncRowHeights() {
-  // For each date+slot pair, set both rows to same height
-  const leftRows = slotStatus.querySelectorAll('.row.progress');
-  leftRows.forEach(lr => {
-    const d = lr.dataset.date, s = lr.dataset.slot;
-    const rr = slotPeople.querySelector(`.row[data-date="${d}"][data-slot="${s}"]`);
-    if (rr) {
-      const h = Math.max(lr.getBoundingClientRect().height, rr.getBoundingClientRect().height);
-      lr.style.minHeight = rr.style.minHeight = h + 'px';
-    }
-  });
-}
-
-function clearReservationsOnly() {
-  let data;
-  try { data = JSON.parse(localStorage.getItem('bookingData')) || {slots:{}, reservations:[]}; } catch { data = {slots:{}, reservations:[]}; }
-  data.reservations = [];
-  localStorage.setItem('bookingData', JSON.stringify(data));
-  renderReservations();
-}
-
-
-// Hook clear logs button
-document.addEventListener('DOMContentLoaded', ()=>{
-  const btn = document.getElementById('clearLogs');
-  if (btn) btn.addEventListener('click', ()=>{
-    if (confirm('確定要清空所有報名紀錄嗎？（不影響已佔用席位）')) {
-      clearReservationsOnly();
-    }
-  });
-});
-
-// Re-sync heights after redraws
-const origLoadAll = loadAll;
-loadAll = function(){ origLoadAll(); syncRowHeights(); };
+document.addEventListener("DOMContentLoaded", loadAll);
