@@ -64,3 +64,11 @@ main { padding:24px; max-width:900px; margin:0 auto; }
 .pwline input{ flex:1; }
 
 .error{ color:#ffdddd; margin-top:8px; }
+
+/* modal */
+.modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:grid; place-items:center; z-index:50; }
+.modal.hidden{ display:none; }
+.modal-content{ width:min(520px, 92vw); background:#2d403a; border:1px solid var(--border); border-radius:12px; padding:16px; }
+.modal-content h3{ margin:0 0 8px 0; }
+.summary-body{ background:#1e2e29; border:1px solid var(--border); border-radius:10px; padding:12px; line-height:1.6; }
+.modal-actions{ margin-top:12px; display:flex; justify-content:flex-end; }

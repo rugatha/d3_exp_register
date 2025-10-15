@@ -133,7 +133,26 @@ submitBtn.addEventListener("click", () => {
   });
   lsSet(data);
 
-  alert(`已報名 ${bookedSeats.length} 個名額！`);
+  // 生成彈窗摘要（以實際成功的 seats 為準）
+  const modal = document.getElementById('summaryModal');
+  const body = document.getElementById('summaryBody');
+  const closeBtn = document.getElementById('closeModal');
+  if (modal && body && closeBtn) {
+    const groups = {};
+    for (const s of bookedSeats) {
+      const k = `${s.date}|${s.slot}`;
+      groups[k] = (groups[k] || 0) + 1;
+    }
+    const lines = Object.entries(groups).map(([k, cnt]) => {
+      const [d, sl] = k.split('|');
+      return `${d} ${sl} × ${cnt}`;
+    });
+    body.textContent = lines.length ? lines.join('
+') : '（沒有可列出的時段）';
+    modal.classList.remove('hidden');
+    closeBtn.onclick = () => modal.classList.add('hidden');
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.add('hidden'); });
+  }
   selectionQuantities = {};
   selCountEl.textContent = "0";
   render(currentDate);
