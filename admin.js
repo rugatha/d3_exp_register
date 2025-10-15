@@ -1,4 +1,4 @@
-// 後台檢視（無後端 / localStorage）
+// 後台檢視（無後端 / localStorage / 多席次）
 const DATES = ["A", "B"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
@@ -15,9 +15,9 @@ const resetBtn = document.getElementById("resetAll");
 const exportBtn = document.getElementById("exportBtn");
 const importFile = document.getElementById("importFile");
 
-const slotStatus = document.getElementById("slotStatus");   // 每時段人數
-const slotPeople = document.getElementById("slotPeople");   // 每時段報名者名單
-const reservationList = document.getElementById("reservationList"); // 全部清單
+const slotStatus = document.getElementById("slotStatus");
+const slotPeople = document.getElementById("slotPeople");
+const reservationList = document.getElementById("reservationList");
 
 function fmtHour(h) { return `${h.toString().padStart(2, "0")}:00`; }
 function lsGet() { try { return JSON.parse(localStorage.getItem("bookingData")); } catch { return null; } }
@@ -31,7 +31,15 @@ function ensureInitialized() {
     if (!data.slots[d]) data.slots[d] = {};
     for (const h of HOURS) {
       const key = fmtHour(h);
-      if (!data.slots[d][key]) data.slots[d][key] = { capacity: DEFAULT_CAPACITY, count: 0 };
+      if (!data.slots[d][key]) data.slots[d][key] = { capacity: DEFAULT_CAPACITY, seats: Array(DEFAULT_CAPACITY).fill(null) };
+      // migrate old schema if needed
+      if (data.slots[d][key].count !== undefined) {
+        const count = data.slots[d][key].count;
+        const cap = data.slots[d][key].capacity ?? DEFAULT_CAPACITY;
+        const seats = Array(cap).fill(null);
+        for (let i = 0; i < Math.min(count, cap); i++) seats[i] = { name: "(migrated)", email: null, createdAt: new Date().toISOString() };
+        data.slots[d][key] = { capacity: cap, seats };
+      }
     }
   }
   if (!Array.isArray(data.reservations)) data.reservations = [];
@@ -47,7 +55,6 @@ function loginOk() {
   adminPanel.classList.remove("hidden");
 }
 
-// Login handler
 loginBtn.addEventListener("click", () => {
   if (passInput.value === ADMIN_PASSWORD) {
     loginOk();
@@ -57,7 +64,6 @@ loginBtn.addEventListener("click", () => {
   }
 });
 
-// Render status: counts per slot
 function renderStatus() {
   slotStatus.innerHTML = "";
   const data = lsGet();
@@ -68,37 +74,35 @@ function renderStatus() {
     for (const h of HOURS) {
       const key = fmtHour(h);
       const s = data.slots[d][key];
-      const left = Math.max(0, (s.capacity ?? DEFAULT_CAPACITY) - (s.count ?? 0));
+      const taken = s.seats.filter(Boolean).length;
+      const left = (s.capacity ?? DEFAULT_CAPACITY) - taken;
       const row = document.createElement("div");
       row.className = "row";
-      row.innerHTML = `<div>${key}</div><div class="badge">${s.count}/${s.capacity}（剩 ${left}）</div>`;
+      row.innerHTML = `<div>${key}</div><div class="badge">${taken}/${s.capacity}（剩 ${left}）</div>`;
       slotStatus.appendChild(row);
     }
   }
 }
 
-// Render people per slot (grouped)
 function renderPeopleBySlot() {
   slotPeople.innerHTML = "";
   const data = lsGet();
   for (const d of DATES) {
-    const h2 = document.createElement("h3");
-    h2.textContent = `日期 ${d}`;
-    slotPeople.appendChild(h2);
-
+    const t = document.createElement("h3");
+    t.textContent = `日期 ${d}`;
+    slotPeople.appendChild(t);
     for (const h of HOURS) {
       const key = fmtHour(h);
-      const group = data.reservations.filter(r => r.date === d && r.slot === key);
-      const wrap = document.createElement("div");
-      wrap.className = "row";
-      const names = group.length ? group.map(r => `${r.name}${r.email ? " <" + r.email + ">" : ""}`).join("、") : "（無）";
-      wrap.innerHTML = `<div>${key}</div><div style="text-align:right;">${names}</div>`;
-      slotPeople.appendChild(wrap);
+      const s = data.slots[d][key];
+      const names = s.seats.map((p, idx) => p ? `#${idx+1}: ${p.name}${p.email ? " <"+p.email+">" : ""}` : `#${idx+1}: （空）`).join("、 ");
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = `<div>${key}</div><div style="text-align:right;">${names}</div>`;
+      slotPeople.appendChild(row);
     }
   }
 }
 
-// Render full reservation list
 function renderReservations() {
   reservationList.innerHTML = "";
   const data = lsGet();
@@ -107,14 +111,11 @@ function renderReservations() {
     return;
   }
   for (const r of data.reservations) {
+    const when = new Date(r.createdAt).toLocaleString();
+    const seats = (r.seats || []).map(s => `${s.date}日 ${s.slot} 位#${s.seatIndex+1}`).join("、 ");
     const row = document.createElement("div");
     row.className = "row";
-    const when = new Date(r.createdAt).toLocaleString();
-    row.innerHTML = `
-      <div>${r.date} 日 ${r.slot}</div>
-      <div>${r.name} ${r.email ? `&lt;${r.email}&gt;` : ""}</div>
-      <div class="badge">${when}</div>
-    `;
+    row.innerHTML = `<div>${r.name} ${r.email ? `&lt;${r.email}&gt;` : ""}</div><div>${seats || "(無席位資訊)"}</div><div class="badge">${when}</div>`;
     reservationList.appendChild(row);
   }
 }
@@ -126,15 +127,14 @@ function loadAll() {
   renderReservations();
 }
 
-// Buttons
 initBtn.addEventListener("click", () => {
-  if (!confirm("建立/覆蓋 A、B 日 13:00~17:00 的時段，容量=3，並將 count 歸零。確定？")) return;
+  if (!confirm("建立/覆蓋 A/B 日 13:00~17:00 的時段，容量=3，並清空所有席位。確定？")) return;
   const data = lsGet() || { slots: {}, reservations: [] };
   data.slots = data.slots || {};
   for (const d of DATES) {
     data.slots[d] = data.slots[d] || {};
     for (const h of HOURS) {
-      data.slots[d][fmtHour(h)] = { capacity: DEFAULT_CAPACITY, count: 0 };
+      data.slots[d][fmtHour(h)] = { capacity: DEFAULT_CAPACITY, seats: Array(DEFAULT_CAPACITY).fill(null) };
     }
   }
   lsSet(data);

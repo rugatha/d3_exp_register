@@ -1,19 +1,22 @@
-# 預約系統（無後端版 / 使用者頁 + 後台頁）
+# 預約系統（無後端版 / 多席次勾選）
 
-- 使用者頁：`index.html`（不含任何後台連結）
-- 後台頁：`admin.html`（密碼：`admin123`，請在 `admin.js` 更改）
+- 使用者頁：`index.html`（不含後台連結）
+- 後台頁：`admin.html`（密碼 `admin123`，可在 `admin.js` 更改）
+- 可一次勾選多個席位、跨時段、跨日期後「一次送出」
 - 主色：`#445f56`
 
-## 功能
-- 日期：A / B
-- 時段：13:00、14:00、15:00、16:00、17:00（每時段顯示容量 3；此無後端版不強制限制）
-- 儲存：localStorage（僅本機瀏覽器）
-
-## 後台檢視
-- 各時段報名人數（A/B × 5 個時段）
-- 各時段報名者清單（姓名＋Email）
-- 全部報名清單（新到舊）
-- 初始化、清空、匯出/匯入 JSON
+## 資料結構（localStorage: bookingData）
+```jsonc
+{
+  "slots": {
+    "A": { "13:00": { "capacity": 3, "seats": [ { "name": "...", "email": "...", "createdAt": "..." }, null, ... ] }, ... },
+    "B": { ... }
+  },
+  "reservations": [
+    { "name":"...", "email":"...", "createdAt":"...", "seats":[ { "date":"A", "slot":"13:00", "seatIndex":0 }, ... ] }
+  ]
+}
+```
 
 ## GitHub Pages
 1. 建公開 repo，上傳所有檔案到根目錄。

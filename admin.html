@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>預約系統 — 後台檢視</title>
+  <title>預約系統 — 後台檢視（多席次）</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -26,14 +26,11 @@
 
     <section id="adminPanel" class="hidden">
       <div class="toolbar">
-        <button id="initSlots" class="btn">初始化 A/B 日 13:00–17:00（容量=3，清空計數）</button>
+        <button id="initSlots" class="btn">初始化 A/B 日 13:00–17:00（容量=3；清空席位）</button>
         <button id="refresh" class="btn">重新整理</button>
-        <button id="resetAll" class="btn">清空本機所有資料</button>
+        <button id="resetAll" class="btn">清空本機資料</button>
         <button id="exportBtn" class="btn">匯出 JSON</button>
-        <label class="importer btnlike">
-          匯入 JSON
-          <input id="importFile" type="file" accept="application/json" />
-        </label>
+        <label class="importer btnlike">匯入 JSON<input id="importFile" type="file" accept="application/json" /></label>
       </div>
 
       <div class="flex">
@@ -42,13 +39,13 @@
           <div class="list" id="slotStatus"></div>
         </div>
         <div class="card">
-          <h2>各時段報名者資訊</h2>
+          <h2>各時段報名者與席位</h2>
           <div class="list" id="slotPeople"></div>
         </div>
       </div>
 
       <div class="card" style="margin-top:16px;">
-        <h2>所有報名清單（時間新到舊）</h2>
+        <h2>所有報名（新到舊）</h2>
         <div class="list" id="reservationList"></div>
       </div>
     </section>
