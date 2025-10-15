@@ -16,13 +16,13 @@ header { padding:16px 24px; border-bottom:1px solid var(--border); }
 h1 { margin:0; font-size:20px; letter-spacing:.5px; }
 h1.center { text-align:center; }
 .hero { display:grid; place-items:center; margin-bottom:12px; }
-.hero img { width:50%; height:auto; border:none; border-radius: 0; } /* 圖片 50%，無邊框 */
-main { padding:24px; max-width:900px; margin:0 auto; }
+.hero img { width: clamp(260px, 50vw, 680px); height:auto; border:none; border-radius: 0; } /* 圖片 50%，無邊框 */
+main { padding:24px; max-width: clamp(320px, 92vw, 1100px); margin:0 auto; }
 .input { display:grid; gap:12px; grid-template-columns: 1fr 1fr; margin-bottom:16px; }
 .input.login { grid-template-columns: 1fr auto; align-items:end; }
 .input label { display:flex; flex-direction:column; gap:6px; font-size:14px; color:var(--fg); }
 .input input, .qty { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#1e2e29; color:var(--fg); }
-.tabs { display:flex; gap:8px; margin:12px 0; align-items:center; justify-content:center; }
+.tabs { display:flex; gap:8px; margin:12px 0; align-items:center; justify-content:center; flex-wrap:wrap; }
 .tab { padding:8px 12px; border-radius:999px; background:#1e2e29; border:1px solid var(--border); color:var(--fg); cursor:pointer; }
 .tab.active { background:#0f1220; border-color:transparent; color:#ffffff; font-weight:700; }
 .grid { display:grid; gap:12px; }
@@ -64,3 +64,12 @@ main { padding:24px; max-width:900px; margin:0 auto; }
 .pwline input{ flex:1; }
 
 .error{ color:#ffdddd; margin-top:8px; }
+
+/* --- Responsive (<= 640px) --- */
+@media (max-width: 640px) {
+  .input { grid-template-columns: 1fr; }
+  .sticky-bar { flex-direction: column; gap: 8px; align-items: stretch; }
+  .sticky-bar .actions { display:flex; gap:8px; }
+  .grid.vertical { grid-template-columns: 1fr; }
+  .hero img { width: 92vw; }
+}
