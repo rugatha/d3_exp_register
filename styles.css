@@ -62,3 +62,5 @@ main { padding:24px; max-width:900px; margin:0 auto; }
 /* password line */
 .pwline{ display:flex; gap:8px; align-items:center; }
 .pwline input{ flex:1; }
+
+.error{ color:#ffdddd; margin-top:8px; }

@@ -48,18 +48,22 @@ function loginOk() {
 }
 
 loginBtn.addEventListener("click", () => {
-  const val = (passInput.value || "").trim(); // trim spaces
+  const val = (passInput.value || "").trim();
+  const err = document.getElementById("loginError");
   if (val === ADMIN_PASSWORD) {
+    if (err) err.classList.add("hidden");
     loginOk();
     loadAll();
   } else {
-    alert("密碼錯誤");
+    if (err) err.classList.remove("hidden");
+    else alert("密碼錯誤");
   }
 });
-// allow Enter key to submit
 passInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     loginBtn.click();
+  }
+});
   }
 });
 
@@ -209,16 +213,18 @@ function start() {
 start();
 
 
-// Press-and-hold to reveal password
+// Click to toggle show/hide password
 const togglePwBtn = document.getElementById("togglePw");
 if (togglePwBtn) {
-  const show = () => { passInput.type = "text"; };
-  const hide = () => { passInput.type = "password"; };
-  togglePwBtn.addEventListener("mousedown", show);
-  togglePwBtn.addEventListener("mouseup", hide);
-  togglePwBtn.addEventListener("mouseleave", hide);
-  togglePwBtn.addEventListener("touchstart", (e)=>{ e.preventDefault(); show(); }, {passive:false});
-  togglePwBtn.addEventListener("touchend", hide);
-  togglePwBtn.addEventListener("touchcancel", hide);
+  togglePwBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (passInput.type === "password") {
+      passInput.type = "text";
+      togglePwBtn.textContent = "隱藏密碼";
+    } else {
+      passInput.type = "password";
+      togglePwBtn.textContent = "顯示密碼";
+    }
+  });
 }
 
