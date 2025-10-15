@@ -69,18 +69,19 @@ function renderStatus() {
       const taken = s.seats.filter(Boolean).length;
       const left = (s.capacity ?? DEFAULT_CAPACITY) - taken;
       const pct = Math.round((taken / s.capacity) * 100);
-
       const row = document.createElement("div");
-      row.className = "row";
+      row.className = "row progress";
+      row.style.setProperty('--pct', pct + '%');
       row.innerHTML = `
-        <div style="min-width:70px;">${key}</div>
-        <div style="flex:1; display:flex; align-items:center; gap:10px;">
-          <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
-          <span class="badge">${taken}/${s.capacity}（${left>=0?`剩 ${left}`:"已滿"}）</span>
+        <div style="min-width:70px; z-index:1;">${key}</div>
+        <div style="flex:1; display:flex; justify-content:flex-end; gap:10px; z-index:1;">
+          <span class="badge">${taken}/${s.capacity}${left>=0?`（剩 ${left}）`:"（已滿）"}</span>
         </div>
       `;
       slotStatus.appendChild(row);
     }
+  }
+}
   }
 }
 
@@ -99,22 +100,56 @@ function renderPeopleBySlot() {
   const data = lsGet();
   for (const d of DATES) {
     const t = document.createElement("h3");
-    t.textContent = d; // 不顯示「日期」字樣
+    t.textContent = d;
     slotPeople.appendChild(t);
     for (const h of HOURS) {
       const key = fmtHour(h);
       const s = data.slots[d][key];
       const row = document.createElement("div");
       row.className = "row";
+      const right = document.createElement("div");
+      right.style.flex = "1";
+      right.style.textAlign = "right";
 
-      const entries = s.seats.map((p, idx) => {
-        if (!p) return `#${idx+1}: （空）`;
-        return `#${idx+1}: <span class="name-phone">${p.name} ${p.phone ? " &lt;"+p.phone+"&gt;" : ""}</span> <button class="btn danger" data-date="${d}" data-slot="${key}" data-idx="${idx}">移除</button>`;
-      }).join("　");
+      s.seats.forEach((p, idx) => {
+        const line = document.createElement("div");
+        line.className = "seatline";
+        if (!p) {
+          line.innerHTML = `#${idx+1}: （空）`;
+        } else {
+          line.innerHTML = `#${idx+1}: <span class="name-phone">${p.name}${p.phone ? " &lt;"+p.phone+"&gt;" : ""}</span> <button class="btn danger" data-date="${d}" data-slot="${key}" data-idx="${idx}">移除</button>`;
+        }
+        right.appendChild(line);
+      });
 
-      row.innerHTML = `<div style="min-width:70px;">${key}</div><div style="text-align:right; flex:1">${entries}</div>`;
+      const left = document.createElement("div");
+      left.style.minWidth = "70px";
+      left.textContent = key;
+
+      row.appendChild(left);
+      row.appendChild(right);
       slotPeople.appendChild(row);
     }
+  }
+
+  // bind remove buttons
+  slotPeople.querySelectorAll("button.btn.danger").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const date = btn.dataset.date;
+      const slot = btn.dataset.slot;
+      const idx = Number(btn.dataset.idx);
+      if (confirm(`確認移除 ${date} ${slot} 的 #${idx+1} 名額？`)) {
+        const ok = removeSeat(date, slot, idx);
+        if (ok) {
+          alert("已移除（保留在所有報名的紀錄中）。");
+          loadAll();
+        } else {
+          alert("移除失敗或該席位為空。");
+        }
+      }
+    });
+  });
+}
   }
 
   // bind remove buttons

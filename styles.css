@@ -1,3 +1,4 @@
+/* v7 styles */
 :root {
   --bg:#445f56;     /* 主視覺：頁面底色 */
   --fg:#eef2ff;
@@ -15,7 +16,7 @@ header { padding:16px 24px; border-bottom:1px solid var(--border); }
 h1 { margin:0; font-size:20px; letter-spacing:.5px; }
 h1.center { text-align:center; }
 .hero { display:grid; place-items:center; margin-bottom:12px; }
-.hero img { max-width: 680px; width: 100%; border-radius: 12px; border:1px solid var(--border); }
+.hero img { width:50%; height:auto; border:none; border-radius: 0; } /* 圖片 50%，無邊框 */
 main { padding:24px; max-width:900px; margin:0 auto; }
 .input { display:grid; gap:12px; grid-template-columns: 1fr 1fr; margin-bottom:16px; }
 .input.login { grid-template-columns: 1fr auto; align-items:end; }
@@ -29,8 +30,8 @@ main { padding:24px; max-width:900px; margin:0 auto; }
 .slot { padding:14px; border-radius:12px; background:var(--card); border:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
 .slot h3 { margin:0; font-size:16px; }
 .meta { font-size:12px; color:var(--muted); }
-.slot .controls { display:flex; align-items:center; gap:8px; }
-.qty { width:100px; }
+.slot .controls { display:flex; align-items:center; gap:8px; justify-content:flex-end; } /* 向右對齊 */
+.qty { width:120px; text-align:right; }
 .btn { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#1e2e29; color:#ffffff; cursor:pointer; }
 .btn.primary { background:var(--primary); color:#ffffff; border:none; font-weight:700; }
 .btn.danger { background:#742b2b; }
@@ -43,10 +44,17 @@ main { padding:24px; max-width:900px; margin:0 auto; }
 .card { flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
 .card h2 { margin-top:0; color: var(--fg); text-align:left; }
 .list { display:grid; gap:8px; }
-.row { padding:10px; border-radius:10px; background:#1e2e29; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.row { position:relative; padding:10px; border-radius:10px; background:#1e2e29; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; overflow:hidden; }
 .badge { padding:4px 8px; border-radius:999px; font-size:12px; background:#1e2e29; border:1px solid var(--border); color:#dbe7e3; }
 .name-phone { color:#dbe7e3; }
+.seatline { width:100%; text-align:right; } /* 每位各自換行 */
 
-/* Progress bar for slotStatus */
-.progress-wrap { width:100%; background:var(--bar-bg); border:1px solid var(--border); border-radius:999px; overflow:hidden; height:12px; }
-.progress-fill { height:100%; background:var(--bar-fill); width:0%; transition: width .3s; }
+ /* 進度條顯示在框底色（row 背景） */
+.row.progress::before {
+  content:"";
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:var(--pct, 0%);
+  background:var(--bar-fill);
+  opacity:0.35; /* 與底色融合 */
+}
