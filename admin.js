@@ -48,11 +48,18 @@ function loginOk() {
 }
 
 loginBtn.addEventListener("click", () => {
-  if (passInput.value === ADMIN_PASSWORD) {
+  const val = (passInput.value || "").trim(); // trim spaces
+  if (val === ADMIN_PASSWORD) {
     loginOk();
     loadAll();
   } else {
     alert("密碼錯誤");
+  }
+});
+// allow Enter key to submit
+passInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    loginBtn.click();
   }
 });
 
@@ -200,3 +207,18 @@ function start() {
   requireLogin();
 }
 start();
+
+
+// Press-and-hold to reveal password
+const togglePwBtn = document.getElementById("togglePw");
+if (togglePwBtn) {
+  const show = () => { passInput.type = "text"; };
+  const hide = () => { passInput.type = "password"; };
+  togglePwBtn.addEventListener("mousedown", show);
+  togglePwBtn.addEventListener("mouseup", hide);
+  togglePwBtn.addEventListener("mouseleave", hide);
+  togglePwBtn.addEventListener("touchstart", (e)=>{ e.preventDefault(); show(); }, {passive:false});
+  togglePwBtn.addEventListener("touchend", hide);
+  togglePwBtn.addEventListener("touchcancel", hide);
+}
+
