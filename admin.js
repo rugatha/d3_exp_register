@@ -1,19 +1,13 @@
-// 後台檢視（無後端 / localStorage）
-const DATES = ["A", "B"];
+// 後台檢視（無後端 / localStorage）— 手動移除報名
+const DATES = ["12/13（六）", "12/14（日）"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
-const ADMIN_PASSWORD = "admin123"; // 可在此更改；頁面不顯示密碼
+const ADMIN_PASSWORD = "admin123"; // 頁面不顯示
 
 const loginPanel = document.getElementById("loginPanel");
 const adminPanel = document.getElementById("adminPanel");
 const passInput = document.getElementById("adminPass");
 const loginBtn = document.getElementById("loginBtn");
-
-const initBtn = document.getElementById("initSlots");
-const refreshBtn = document.getElementById("refresh");
-const resetBtn = document.getElementById("resetAll");
-const exportBtn = document.getElementById("exportBtn");
-const importFile = document.getElementById("importFile");
 
 const slotStatus = document.getElementById("slotStatus");
 const slotPeople = document.getElementById("slotPeople");
@@ -22,7 +16,6 @@ const reservationList = document.getElementById("reservationList");
 function fmtHour(h) { return `${h.toString().padStart(2, "0")}:00`; }
 function lsGet() { try { return JSON.parse(localStorage.getItem("bookingData")); } catch { return null; } }
 function lsSet(data) { localStorage.setItem("bookingData", JSON.stringify(data)); }
-
 function ensureInitialized() {
   let data = lsGet();
   if (!data) data = { slots: {}, reservations: [] };
@@ -83,6 +76,32 @@ function renderStatus() {
   }
 }
 
+// Remove a single seat (by date, slot, seatIndex)
+function removeSeat(date, slot, seatIndex) {
+  const data = lsGet();
+  const slotObj = data.slots[date][slot];
+  if (!slotObj || !slotObj.seats[seatIndex]) return false;
+
+  const seat = slotObj.seats[seatIndex];
+  slotObj.seats[seatIndex] = null;
+
+  // also prune from reservations
+  for (let i = data.reservations.length - 1; i >= 0; i--) {
+    const r = data.reservations[i];
+    const before = r.seats.length;
+    r.seats = r.seats.filter(s => !(s.date === date && s.slot === slot && s.seatIndex === seatIndex));
+    if (r.seats.length === 0) {
+      data.reservations.splice(i, 1);
+    } else if (r.seats.length !== before) {
+      // keep reservation but updated
+      data.reservations[i] = r;
+    }
+  }
+
+  lsSet(data);
+  return seat;
+}
+
 function renderPeopleBySlot() {
   slotPeople.innerHTML = "";
   const data = lsGet();
@@ -93,13 +112,37 @@ function renderPeopleBySlot() {
     for (const h of HOURS) {
       const key = fmtHour(h);
       const s = data.slots[d][key];
-      const names = s.seats.map((p, idx) => p ? `#${idx+1}: ${p.name}${p.email ? " <"+p.email+">" : ""}` : `#${idx+1}: （空）`).join("、 ");
       const row = document.createElement("div");
       row.className = "row";
-      row.innerHTML = `<div>${key}</div><div style="text-align:right;">${names}</div>`;
+
+      const entries = s.seats.map((p, idx) => {
+        if (!p) return `#${idx+1}: （空）`;
+        const rmId = `rm_${d}_${key}_${idx}`.replace(/[^\\w]/g,'');
+        return `#${idx+1}: <span class="name-email">${p.name}${p.email ? " &lt;"+p.email+"&gt;" : ""}</span> <button class="btn danger" data-date="${d}" data-slot="${key}" data-idx="${idx}">移除</button>`;
+      }).join("　");
+
+      row.innerHTML = `<div style="flex:1">${key}</div><div style="text-align:right; flex:3">${entries}</div>`;
       slotPeople.appendChild(row);
     }
   }
+
+  // bind remove buttons
+  slotPeople.querySelectorAll("button.btn.danger").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const date = btn.dataset.date;
+      const slot = btn.dataset.slot;
+      const idx = Number(btn.dataset.idx);
+      if (confirm(`確認移除 ${date} ${slot} 的 #${idx+1} 名額？`)) {
+        const removed = removeSeat(date, slot, idx);
+        if (removed) {
+          alert("已移除。");
+          loadAll();
+        } else {
+          alert("移除失敗或該席位為空。");
+        }
+      }
+    });
+  });
 }
 
 function renderReservations() {
@@ -111,12 +154,30 @@ function renderReservations() {
   }
   for (const r of data.reservations) {
     const when = new Date(r.createdAt).toLocaleString();
-    const seats = (r.seats || []).map(s => `${s.date}日 ${s.slot} 位#${s.seatIndex+1}`).join("、 ");
+    const seats = (r.seats || []).map(s => `${s.date} ${s.slot} #${s.seatIndex+1} <button class="btn danger sm" data-date="${s.date}" data-slot="${s.slot}" data-idx="${s.seatIndex}">移除</button>`).join("　");
     const row = document.createElement("div");
     row.className = "row";
-    row.innerHTML = `<div>${r.name} ${r.email ? `&lt;${r.email}&gt;` : ""}</div><div>${seats || "(無席位資訊)"}</div><div class="badge">${when}</div>`;
+    row.innerHTML = `<div>${r.name} ${r.email ? `&lt;${r.email}&gt;` : ""}</div><div style="flex:1;text-align:right;">${seats || "(無席位)"}</div><div class="badge">${when}</div>`;
     reservationList.appendChild(row);
   }
+
+  // bind remove buttons in reservation list
+  reservationList.querySelectorAll("button.btn.danger").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const date = btn.dataset.date;
+      const slot = btn.dataset.slot;
+      const idx = Number(btn.dataset.idx);
+      if (confirm(`確認移除 ${date} ${slot} 的 #${idx+1} 名額？`)) {
+        const removed = removeSeat(date, slot, idx);
+        if (removed) {
+          alert("已移除。");
+          loadAll();
+        } else {
+          alert("移除失敗或該席位為空。");
+        }
+      }
+    });
+  });
 }
 
 function loadAll() {
@@ -126,60 +187,8 @@ function loadAll() {
   renderReservations();
 }
 
-initBtn.addEventListener("click", () => {
-  if (!confirm("建立/覆蓋 A/B 日 13:00~17:00 的時段，容量=3，並清空所有席位。確定？")) return;
-  const data = lsGet() || { slots: {}, reservations: [] };
-  data.slots = data.slots || {};
-  for (const d of DATES) {
-    data.slots[d] = data.slots[d] || {};
-    for (const h of HOURS) {
-      data.slots[d][fmtHour(h)] = { capacity: DEFAULT_CAPACITY, seats: Array(DEFAULT_CAPACITY).fill(null) };
-    }
-  }
-  lsSet(data);
-  alert("初始化完成（僅此瀏覽器）。");
-  loadAll();
-});
-
-refreshBtn.addEventListener("click", loadAll);
-resetBtn.addEventListener("click", () => {
-  if (!confirm("⚠️ 將清空此瀏覽器所有預約與時段資料。確定？")) return;
-  localStorage.removeItem("bookingData");
-  ensureInitialized();
-  loadAll();
-});
-
-exportBtn.addEventListener("click", () => {
-  const data = lsGet() || { slots: {}, reservations: [] };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `booking_export_${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
-
-importFile.addEventListener("change", (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || typeof data !== "object") throw new Error("格式錯誤");
-      if (!data.slots || !data.reservations) throw new Error("缺少 slots / reservations");
-      lsSet(data);
-      alert("匯入完成。");
-      loadAll();
-    } catch (err) {
-      alert("匯入失敗：" + (err.message || err));
-    }
-  };
-  reader.readAsText(file);
-});
-
 // Start
-requireLogin();
+function start() {
+  requireLogin();
+}
+start();

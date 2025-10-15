@@ -1,5 +1,5 @@
-// 使用者頁（無後端 / localStorage / 每時段以數量選擇，多時段合併提交）
-const DATES = ["A", "B"];
+// 使用者頁（無後端 / localStorage / 數量下拉選單，多時段合併提交）
+const DATES = ["12/13（六）", "12/14（日）"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
 
@@ -11,9 +11,8 @@ const submitBtn = document.getElementById("submitSel");
 const clearBtn = document.getElementById("clearSel");
 const selCountEl = document.getElementById("selCount");
 
-let currentDate = "A";
-// selectionQuantities: { "A|13:00": 2, ... }
-let selectionQuantities = {};
+let currentDate = "12/13（六）";
+let selectionQuantities = {}; // { "12/13（六）|13:00": 2, ... }
 
 function fmtHour(h) { return `${h.toString().padStart(2, "0")}:00`; }
 function keyOf(date, slotKey) { return `${date}|${slotKey}`; }
@@ -29,7 +28,6 @@ function ensureInitialized() {
     for (const h of HOURS) {
       const key = fmtHour(h);
       if (!data.slots[d][key]) data.slots[d][key] = { capacity: DEFAULT_CAPACITY, seats: Array(DEFAULT_CAPACITY).fill(null) };
-      // migrate old count schema if necessary
       if (data.slots[d][key].count !== undefined) {
         const count = data.slots[d][key].count;
         const cap = data.slots[d][key].capacity ?? DEFAULT_CAPACITY;
@@ -47,6 +45,11 @@ function computeTotalSelected() {
   return Object.values(selectionQuantities).reduce((a,b)=>a+(b||0), 0);
 }
 
+function makeSelect(max, current) {
+  const opts = Array.from({length: max+1}, (_,i)=>`<option value="${i}" ${i===current?'selected':''}>${i}</option>`).join("");
+  return `<select class="qty" data-type="qty">${opts}</select>`;
+}
+
 function render(date) {
   ensureInitialized();
   slotsEl.innerHTML = "";
@@ -59,7 +62,7 @@ function render(date) {
     const left = Math.max(0, (slotObj.capacity ?? DEFAULT_CAPACITY) - taken);
 
     const currentQty = selectionQuantities[keyOf(date, slotKey)] || 0;
-    const max = left; // 可選上限 = 剩餘名額（此無後端版僅前端限制）
+    const selectHtml = makeSelect(left, currentQty);
 
     const card = document.createElement("div");
     card.className = "slot";
@@ -67,20 +70,23 @@ function render(date) {
       <h3>${slotKey}</h3>
       <div class="meta">已預約：${taken} / ${slotObj.capacity}（剩 ${left}）</div>
       <div class="controls">
-        <label>我要報名
-          <input class="qty" type="number" min="0" max="${max}" step="1" value="${currentQty}" data-date="${date}" data-slot="${slotKey}"> 位
-        </label>
+        <label>我要報名 ${selectHtml} 位</label>
       </div>
     `;
+    const selectEl = card.querySelector("select.qty");
+    // attach dataset
+    selectEl.dataset.date = date;
+    selectEl.dataset.slot = slotKey;
+
     slotsEl.appendChild(card);
   }
 
   selCountEl.textContent = computeTotalSelected();
 }
 
-// Handle qty changes
-slotsEl.addEventListener("input", (e) => {
-  const el = e.target.closest("input.qty[data-slot]");
+// Handle qty change
+slotsEl.addEventListener("change", (e) => {
+  const el = e.target.closest("select.qty[data-slot]");
   if (!el) return;
   const date = el.dataset.date;
   const slot = el.dataset.slot;
@@ -98,14 +104,13 @@ clearBtn.addEventListener("click", () => {
 submitBtn.addEventListener("click", () => {
   const name = (nameInput.value || "").trim();
   const email = (emailInput.value || "").trim();
-  if (!name) { alert("請先填寫你的稱呼"); return; }
+  if (!name || !email) { alert("請填寫 你的稱呼 與 Email"); return; }
   const total = computeTotalSelected();
   if (total <= 0) { alert("尚未選擇任何名額"); return; }
 
   const data = lsGet();
   const bookedSeats = [];
 
-  // 逐時段填入空位
   for (const [k, qty] of Object.entries(selectionQuantities)) {
     if (!qty) continue;
     const [date, slot] = k.split("|");

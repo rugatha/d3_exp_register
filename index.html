@@ -3,30 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>預約系統（使用者頁 · 數量報名）</title>
+  <title>Rugatha D&D 跑團體驗活動報名</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header>
-    <h1>預約報名（A/B 日 · 13:00–17:00 · 每時段 3 名）</h1>
+    <h1 class="center">Rugatha D&D 跑團體驗活動報名</h1>
   </header>
 
   <main>
     <section class="input">
       <label>
-        你的稱呼（必填）
-        <input id="nameInput" type="text" placeholder="例如：阿龍" />
+        你的稱呼
+        <input id="nameInput" type="text" required />
       </label>
       <label>
-        Email（選填）
-        <input id="emailInput" type="email" placeholder="you@example.com" />
+        Email
+        <input id="emailInput" type="email" required />
       </label>
     </section>
 
     <section>
       <div class="tabs">
-        <button class="tab active" data-date="A">A 日</button>
-        <button class="tab" data-date="B">B 日</button>
+        <button class="tab active" data-date="12/13（六）">12/13（六）</button>
+        <button class="tab" data-date="12/14（日）">12/14（日）</button>
       </div>
       <div id="slots" class="grid"></div>
     </section>
@@ -39,7 +39,7 @@
       </div>
     </div>
 
-    <p class="tip">無後端版：資料僅儲存在你的瀏覽器（localStorage）。</p>
+    <p class="tip">提醒：這是無後端版，資料僅儲存在你的瀏覽器（localStorage）。</p>
   </main>
 
   <script src="app.js"></script>

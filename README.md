@@ -1,16 +1,11 @@
-# 預約系統（無後端版 / 數量選擇）
+# Rugatha D&D 跑團體驗活動報名（無後端 / v5）
 
-- 使用者頁：`index.html`（不顯示任何報名者姓名）
-- 後台頁：`admin.html`（頁面不顯示密碼提示；可在 `admin.js` 修改 `ADMIN_PASSWORD`）
-- 主視覺底色：`#445f56`
-
-## 特色
-- A / B 兩日；時段：13:00、14:00、15:00、16:00、17:00
-- 使用者在**每個時段輸入要報名的人數**（0~剩餘名額），可跨時段一次送出。
-- 純前端 / localStorage，無多人同步。
+- 使用者頁：`index.html`（標題置中、12/13（六）與 12/14（日）；各時段以**下拉選單**選擇數量）
+- 後台頁：`admin.html`（標題置中為「報名清單」，移除頂部工具列，支援**手動移除席位**；各時段顯示名稱與 Email）
+- 主視覺：整體底色 `#445f56`
 
 ## 部署（GitHub Pages）
-1. 建公開 repo，上傳檔案到根目錄。
+1. 建公開 repo，上傳這些檔案到根目錄。
 2. Settings → Pages → Source: Deploy from a branch → main / (root)
 3. 前台：`https://<帳號>.github.io/<repo>/`
-4. 後台：`https://<帳號>.github.io/<repo>/admin.html`
+4. 後台：`https://<帳號>.github.io/<repo>/admin.html`（登入密碼請在 `admin.js` 的 `ADMIN_PASSWORD` 調整）
