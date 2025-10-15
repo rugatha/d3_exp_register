@@ -1,4 +1,4 @@
-// 使用者頁（無後端 / localStorage / 多席次勾選與跨時段）
+// 使用者頁（無後端 / localStorage / 每時段以數量選擇，多時段合併提交）
 const DATES = ["A", "B"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
@@ -12,10 +12,11 @@ const clearBtn = document.getElementById("clearSel");
 const selCountEl = document.getElementById("selCount");
 
 let currentDate = "A";
-// selection: array of {date, slot("HH:00"), seatIndex}
-let selection = [];
+// selectionQuantities: { "A|13:00": 2, ... }
+let selectionQuantities = {};
 
 function fmtHour(h) { return `${h.toString().padStart(2, "0")}:00`; }
+function keyOf(date, slotKey) { return `${date}|${slotKey}`; }
 function lsGet() { try { return JSON.parse(localStorage.getItem("bookingData")); } catch { return null; } }
 function lsSet(data) { localStorage.setItem("bookingData", JSON.stringify(data)); }
 
@@ -27,9 +28,8 @@ function ensureInitialized() {
     if (!data.slots[d]) data.slots[d] = {};
     for (const h of HOURS) {
       const key = fmtHour(h);
-      // seats: fixed-length array (capacity) of null or {name,email,createdAt}
       if (!data.slots[d][key]) data.slots[d][key] = { capacity: DEFAULT_CAPACITY, seats: Array(DEFAULT_CAPACITY).fill(null) };
-      // migrate old count-based schema if exists
+      // migrate old count schema if necessary
       if (data.slots[d][key].count !== undefined) {
         const count = data.slots[d][key].count;
         const cap = data.slots[d][key].capacity ?? DEFAULT_CAPACITY;
@@ -43,93 +43,96 @@ function ensureInitialized() {
   lsSet(data);
 }
 
-// Helpers
-function isSeatTaken(slotObj, idx) { return !!slotObj.seats[idx]; }
-function toggleSelection(date, slotKey, idx, checked) {
-  const key = `${date}|${slotKey}|${idx}`;
-  const exists = selection.findIndex(s => `${s.date}|${s.slot}|${s.seatIndex}` === key);
-  if (checked && exists === -1) {
-    selection.push({ date, slot: slotKey, seatIndex: idx });
-  } else if (!checked && exists !== -1) {
-    selection.splice(exists, 1);
-  }
-  selCountEl.textContent = selection.length;
-}
-
-function isSelected(date, slotKey, idx) {
-  return selection.some(s => s.date === date && s.slot === slotKey && s.seatIndex === idx);
+function computeTotalSelected() {
+  return Object.values(selectionQuantities).reduce((a,b)=>a+(b||0), 0);
 }
 
 function render(date) {
   ensureInitialized();
   slotsEl.innerHTML = "";
   const data = lsGet();
+
   for (const h of HOURS) {
     const slotKey = fmtHour(h);
-    const s = data.slots[date][slotKey];
-    const taken = s.seats.filter(Boolean).length;
-    const left = Math.max(0, (s.capacity ?? DEFAULT_CAPACITY) - taken);
+    const slotObj = data.slots[date][slotKey];
+    const taken = slotObj.seats.filter(Boolean).length;
+    const left = Math.max(0, (slotObj.capacity ?? DEFAULT_CAPACITY) - taken);
+
+    const currentQty = selectionQuantities[keyOf(date, slotKey)] || 0;
+    const max = left; // 可選上限 = 剩餘名額（此無後端版僅前端限制）
 
     const card = document.createElement("div");
     card.className = "slot";
-    const seatsHtml = s.seats.map((seat, idx) => {
-      const id = `ck_${date}_${slotKey}_${idx}`.replace(/[:]/g,"");
-      const disabled = seat ? "disabled" : "";
-      const checked = isSelected(date, slotKey, idx) ? "checked" : "";
-      const label = seat ? `${idx+1}（已被 ${seat.name}）` : `${idx+1}`;
-      return `<label class="seat"><input type="checkbox" id="${id}" data-date="${date}" data-slot="${slotKey}" data-idx="${idx}" ${disabled} ${checked}/>位 ${label}</label>`;
-    }).join("");
-
     card.innerHTML = `
       <h3>${slotKey}</h3>
-      <div class="meta">已預約：${taken} / ${s.capacity}（剩 ${left}）</div>
-      <div class="seats">${seatsHtml}</div>
+      <div class="meta">已預約：${taken} / ${slotObj.capacity}（剩 ${left}）</div>
+      <div class="controls">
+        <label>我要報名
+          <input class="qty" type="number" min="0" max="${max}" step="1" value="${currentQty}" data-date="${date}" data-slot="${slotKey}"> 位
+        </label>
+      </div>
     `;
     slotsEl.appendChild(card);
   }
+
+  selCountEl.textContent = computeTotalSelected();
 }
 
-// Event: seat selection
-slotsEl.addEventListener("change", (e) => {
-  const ck = e.target.closest("input[type='checkbox'][data-slot]");
-  if (!ck) return;
-  const date = ck.dataset.date;
-  const slot = ck.dataset.slot;
-  const idx = Number(ck.dataset.idx);
-  toggleSelection(date, slot, idx, ck.checked);
+// Handle qty changes
+slotsEl.addEventListener("input", (e) => {
+  const el = e.target.closest("input.qty[data-slot]");
+  if (!el) return;
+  const date = el.dataset.date;
+  const slot = el.dataset.slot;
+  const val = Math.max(0, Number(el.value || 0));
+  selectionQuantities[keyOf(date, slot)] = val;
+  selCountEl.textContent = computeTotalSelected();
 });
 
-// Clear selection
 clearBtn.addEventListener("click", () => {
-  selection = [];
+  selectionQuantities = {};
   selCountEl.textContent = "0";
   render(currentDate);
 });
 
-// Submit selection
 submitBtn.addEventListener("click", () => {
   const name = (nameInput.value || "").trim();
   const email = (emailInput.value || "").trim();
   if (!name) { alert("請先填寫你的稱呼"); return; }
-  if (selection.length === 0) { alert("尚未選擇任何席位"); return; }
+  const total = computeTotalSelected();
+  if (total <= 0) { alert("尚未選擇任何名額"); return; }
 
   const data = lsGet();
-  // assign seats
-  for (const sel of selection) {
-    const slotObj = data.slots[sel.date][sel.slot];
-    if (!slotObj.seats[sel.seatIndex]) {
-      slotObj.seats[sel.seatIndex] = { name, email: email || null, createdAt: new Date().toISOString() };
+  const bookedSeats = [];
+
+  // 逐時段填入空位
+  for (const [k, qty] of Object.entries(selectionQuantities)) {
+    if (!qty) continue;
+    const [date, slot] = k.split("|");
+    const slotObj = data.slots[date][slot];
+    let remaining = qty;
+    for (let i=0; i<slotObj.seats.length && remaining>0; i++) {
+      if (!slotObj.seats[i]) {
+        slotObj.seats[i] = { name, email: email || null, createdAt: new Date().toISOString() };
+        bookedSeats.push({ date, slot, seatIndex: i });
+        remaining--;
+      }
     }
   }
-  // add a consolidated reservation record
+
+  if (bookedSeats.length === 0) {
+    alert("沒有可用的名額（可能已被佔滿）。");
+    return;
+  }
+
   data.reservations.unshift({
     name, email: email || null, createdAt: new Date().toISOString(),
-    seats: selection.map(s => ({ date: s.date, slot: s.slot, seatIndex: s.seatIndex }))
+    seats: bookedSeats
   });
   lsSet(data);
 
-  alert(`已報名 ${selection.length} 個位置！`);
-  selection = [];
+  alert(`已報名 ${bookedSeats.length} 個名額！`);
+  selectionQuantities = {};
   selCountEl.textContent = "0";
   render(currentDate);
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>預約系統（使用者頁 · 多席次勾選）</title>
+  <title>預約系統（使用者頁 · 數量報名）</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -32,14 +32,14 @@
     </section>
 
     <div class="sticky-bar">
-      <div class="sel-summary"><span id="selCount">0</span> 個報名位置已選</div>
+      <div class="sel-summary">已選 <strong id="selCount">0</strong> 個名額</div>
       <div class="actions">
         <button id="clearSel" class="btn">清除選取</button>
         <button id="submitSel" class="btn primary">送出報名</button>
       </div>
     </div>
 
-    <p class="tip">無後端版：資料儲存在你的瀏覽器（localStorage）。可跨時段、跨日期一次報名多席。</p>
+    <p class="tip">無後端版：資料僅儲存在你的瀏覽器（localStorage）。</p>
   </main>
 
   <script src="app.js"></script>

@@ -1,8 +1,8 @@
-// 後台檢視（無後端 / localStorage / 多席次）
+// 後台檢視（無後端 / localStorage）
 const DATES = ["A", "B"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
-const ADMIN_PASSWORD = "admin123"; // ⚠️ 請自行更改
+const ADMIN_PASSWORD = "admin123"; // 可在此更改；頁面不顯示密碼
 
 const loginPanel = document.getElementById("loginPanel");
 const adminPanel = document.getElementById("adminPanel");
@@ -32,7 +32,6 @@ function ensureInitialized() {
     for (const h of HOURS) {
       const key = fmtHour(h);
       if (!data.slots[d][key]) data.slots[d][key] = { capacity: DEFAULT_CAPACITY, seats: Array(DEFAULT_CAPACITY).fill(null) };
-      // migrate old schema if needed
       if (data.slots[d][key].count !== undefined) {
         const count = data.slots[d][key].count;
         const cap = data.slots[d][key].capacity ?? DEFAULT_CAPACITY;
