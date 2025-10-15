@@ -1,4 +1,4 @@
-// 使用者頁（無後端 / localStorage / 數量下拉選單，多時段合併提交）
+// 使用者頁（無後端 / localStorage / 數量下拉選單，多時段合併提交 / 使用 phone 欄位）
 const DATES = ["12/13（六）", "12/14（日）"];
 const HOURS = [13, 14, 15, 16, 17];
 const DEFAULT_CAPACITY = 3;
@@ -6,7 +6,7 @@ const DEFAULT_CAPACITY = 3;
 const slotsEl = document.getElementById("slots");
 const tabs = document.querySelectorAll(".tab");
 const nameInput = document.getElementById("nameInput");
-const emailInput = document.getElementById("emailInput");
+const phoneInput = document.getElementById("phoneInput");
 const submitBtn = document.getElementById("submitSel");
 const clearBtn = document.getElementById("clearSel");
 const selCountEl = document.getElementById("selCount");
@@ -32,7 +32,7 @@ function ensureInitialized() {
         const count = data.slots[d][key].count;
         const cap = data.slots[d][key].capacity ?? DEFAULT_CAPACITY;
         const seats = Array(cap).fill(null);
-        for (let i = 0; i < Math.min(count, cap); i++) seats[i] = { name: "(migrated)", email: null, createdAt: new Date().toISOString() };
+        for (let i = 0; i < Math.min(count, cap); i++) seats[i] = { name: "(migrated)", phone: null, createdAt: new Date().toISOString() };
         data.slots[d][key] = { capacity: cap, seats };
       }
     }
@@ -74,17 +74,14 @@ function render(date) {
       </div>
     `;
     const selectEl = card.querySelector("select.qty");
-    // attach dataset
     selectEl.dataset.date = date;
     selectEl.dataset.slot = slotKey;
-
     slotsEl.appendChild(card);
   }
 
   selCountEl.textContent = computeTotalSelected();
 }
 
-// Handle qty change
 slotsEl.addEventListener("change", (e) => {
   const el = e.target.closest("select.qty[data-slot]");
   if (!el) return;
@@ -103,8 +100,8 @@ clearBtn.addEventListener("click", () => {
 
 submitBtn.addEventListener("click", () => {
   const name = (nameInput.value || "").trim();
-  const email = (emailInput.value || "").trim();
-  if (!name || !email) { alert("請填寫 你的稱呼 與 Email"); return; }
+  const phone = (phoneInput.value || "").trim();
+  if (!name || !phone) { alert("請填寫 冒險者名稱 與 手機號碼"); return; }
   const total = computeTotalSelected();
   if (total <= 0) { alert("尚未選擇任何名額"); return; }
 
@@ -118,7 +115,7 @@ submitBtn.addEventListener("click", () => {
     let remaining = qty;
     for (let i=0; i<slotObj.seats.length && remaining>0; i++) {
       if (!slotObj.seats[i]) {
-        slotObj.seats[i] = { name, email: email || null, createdAt: new Date().toISOString() };
+        slotObj.seats[i] = { name, phone: phone || null, createdAt: new Date().toISOString() };
         bookedSeats.push({ date, slot, seatIndex: i });
         remaining--;
       }
@@ -131,7 +128,7 @@ submitBtn.addEventListener("click", () => {
   }
 
   data.reservations.unshift({
-    name, email: email || null, createdAt: new Date().toISOString(),
+    name, phone: phone || null, createdAt: new Date().toISOString(),
     seats: bookedSeats
   });
   lsSet(data);

@@ -8,18 +8,21 @@
 </head>
 <body>
   <header>
+    <div class="hero">
+      <img src="https://rugatha.wordpress.com/wp-content/uploads/2023/11/att.bo8_ollmqnnpvunt6xrsy6l3f3y-mbtmni9bna4v7xi.jpg?w=1024" alt="Rugatha D&D" />
+    </div>
     <h1 class="center">Rugatha D&D 跑團體驗活動報名</h1>
   </header>
 
   <main>
     <section class="input">
       <label>
-        你的稱呼
+        冒險者名稱
         <input id="nameInput" type="text" required />
       </label>
       <label>
-        Email
-        <input id="emailInput" type="email" required />
+        手機號碼
+        <input id="phoneInput" type="tel" required />
       </label>
     </section>
 
@@ -28,7 +31,7 @@
         <button class="tab active" data-date="12/13（六）">12/13（六）</button>
         <button class="tab" data-date="12/14（日）">12/14（日）</button>
       </div>
-      <div id="slots" class="grid"></div>
+      <div id="slots" class="grid vertical"></div>
     </section>
 
     <div class="sticky-bar">
@@ -38,8 +41,6 @@
         <button id="submitSel" class="btn primary">送出報名</button>
       </div>
     </div>
-
-    <p class="tip">提醒：這是無後端版，資料僅儲存在你的瀏覽器（localStorage）。</p>
   </main>
 
   <script src="app.js"></script>
