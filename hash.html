@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>產生管理密碼 SHA-256</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main style="max-width:720px;margin:40px auto;background:#2d403a;padding:20px;border-radius:12px;border:1px solid #20312c;">
+    <h2 style="margin-top:0">產生管理密碼 SHA-256（離線）</h2>
+    <p>在下面輸入你想要的管理密碼，系統會輸出 SHA-256（十六進位）。把那串字貼到 <code>admin.v7e.js</code> 裡的 <code>ADMIN_HASH</code> 變數即可。</p>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="pw" type="text" placeholder="輸入新密碼" style="flex:1;padding:10px;border-radius:10px;border:1px solid #20312c;background:#1e2e29;color:#eef2ff;">
+      <button id="go" class="btn primary">產生</button>
+    </div>
+    <pre id="out" style="margin-top:12px;background:#1e2e29;padding:12px;border-radius:10px;border:1px solid #20312c;color:#eef2ff;white-space:pre-wrap;word-break:break-all;"></pre>
+  </main>
+  <script>
+    async function sha256Hex(text){
+      const enc = new TextEncoder().encode(text);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    document.getElementById('go').addEventListener('click', async ()=>{
+      const v = (document.getElementById('pw').value||'').trim();
+      if(!v){ alert('請先輸入密碼'); return; }
+      const hex = await sha256Hex(v);
+      document.getElementById('out').textContent = hex;
+    });
+  </script>
+</body>
+</html>
